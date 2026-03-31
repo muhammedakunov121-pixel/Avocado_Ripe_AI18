@@ -8,7 +8,6 @@ avocado_app = FastAPI()
 model = joblib.load('model.pkl')
 scaler = joblib.load('scaler.pkl')
 
-# Словарь для перевода текста в число (как ты просил в самом начале)
 color_map = {
     'green': 1,
     'breaking': 2,
@@ -24,23 +23,20 @@ class SchemaAvocado(BaseModel):
     hue: int
     saturation: int
     brightness: int
-    color_category: str  # Принимаем строку ('red', 'green'...)
+    color_category: str
     sound_db: int
     weight_g: int
     size_cm3: int
-    # Поле ripeness УДАЛЯЕМ из ввода, так как это то, что мы хотим УЗНАТЬ
 
 
 @avocado_app.post('/predict/')
 async def predict(avocado: SchemaAvocado):
     data = avocado.model_dump()
 
-    # 1. Переводим строковую категорию цвета в число (1-6)
-    # Если цвета нет в словаре, по умолчанию ставим 1
+
     color_num = color_map.get(data['color_category'].lower().strip(), 1)
 
-    # 2. Собираем СТРОГО 8 признаков в том порядке, в котором они были в таблице при обучении
-    # ВАЖНО: Проверь этот порядок со своей таблицей df!
+
     features = [
         data['firmness'],
         data['hue'],
@@ -52,7 +48,6 @@ async def predict(avocado: SchemaAvocado):
         data['size_cm3']
     ]
 
-    # Теперь в списке ровно 8 элементов. Ошибка X has 10 features исчезнет.
     scaled_data = scaler.transform([features])
     pred = model.predict(scaled_data)[0]
 
